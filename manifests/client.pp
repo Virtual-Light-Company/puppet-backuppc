@@ -224,6 +224,7 @@ class backuppc::client (
   $backuppc_hostname     = '',
   $client_name_alias     = false,
   $system_account        = 'backup',
+  $system_account_password = '*',
   $system_home_directory = '/var/backups',
   $system_additional_commands = [],
   $system_additional_commands_noexec = [],
@@ -392,7 +393,7 @@ class backuppc::client (
       shell      => '/bin/bash',
       comment    => 'BackupPC',
       system     => true,
-      password   => sha1("tyF761_${::fqdn}${::uniqueid}"),
+      password   => $system_account_password,
     }
 
     file { "${system_home_directory}/.ssh":
