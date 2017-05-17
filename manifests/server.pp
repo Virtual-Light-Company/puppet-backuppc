@@ -262,7 +262,9 @@ class backuppc::server (
   $cgi_admin_user_group       = 'backuppc',
   $cgi_date_format_mmdd       = 1,
   $user_cmd_check_status      = true,
-  $pingmaxmsec                = 20
+  $pingmaxmsec                = 20,
+  $ssh_pub_key_value          = '',
+  $ssh_pub_key_type           = 'ssh-rsa'
 ) inherits backuppc::params  {
 
   if empty($backuppc_password) {
@@ -351,6 +353,9 @@ class backuppc::server (
   validate_string($language)
   validate_string($cgi_admin_user_group)
   validate_string($cgi_admin_users)
+
+  validate_string($ssh_pub_key_value)
+  validate_string($ssh_pub_key_type)
 
   $real_incr_fill = bool2num($incr_fill)
   $real_bzfif     = bool2num($blackout_zero_files_is_fatal)
@@ -478,23 +483,20 @@ class backuppc::server (
   }
 
   # Export backuppc's authorized key to all clients
-  # TODO don't rely on facter to obtain the ssh key.
-  if $facts['backuppc_pubkey_rsa'] != undef {
-    @@ssh_authorized_key { "backuppc_${::fqdn}":
-      ensure  => present,
-      key     => $::backuppc_pubkey_rsa,
-      name    => "backuppc_${::fqdn}",
-      user    => 'backup',
-      options => [
-        'command="~/backuppc.sh"',
-        'no-agent-forwarding',
-        'no-port-forwarding',
-        'no-pty',
-        'no-X11-forwarding',
-      ],
-      type    => 'ssh-rsa',
-      tag     => "backuppc_${::fqdn}",
-    }
+  @@ssh_authorized_key { "backuppc_${::fqdn}":
+    ensure  => present,
+    key     => $ssh_pub_key_value,
+    name    => "backuppc_${::fqdn}",
+    user    => 'backup',
+    options => [
+      'command="~/backuppc.sh"',
+      'no-agent-forwarding',
+      'no-port-forwarding',
+      'no-pty',
+      'no-X11-forwarding',
+    ],
+    type    => $ssh_pub_key_type,
+    tag     => "backuppc_${::fqdn}",
   }
 
   # Since we now tag the hosts that are managed by
